@@ -60,8 +60,8 @@ void IoTSender::initialize(int stage)
 
     batteryVector.setName("Battery Level");
     batteryTimeVector.setName("Battery Time Consumption");
-    batteryTime_ = 172800;
-    battery_ = 240.0;
+    batteryTime_ = par("batteryTime");
+    battery_ = par("batteryAmp");
 
     //timeHistogram.setName("Time per State Histogram");
     //timeHistogram.setRangeAutoUpper(0, 10, 1.5);
