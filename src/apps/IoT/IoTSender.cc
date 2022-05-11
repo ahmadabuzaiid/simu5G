@@ -51,7 +51,7 @@ void IoTSender::initialize(int stage)
     nframesTmp_ = 0;
     iDframe_ = 0;
     timestamp_ = 0;
-    sampling_time = par("sampling_time");
+    spb_ = par("spb");
     size_ = par("PacketSize");
     nPkts_ = par("nPkts");
     selfSender_ = new cMessage("selfSender");
@@ -62,9 +62,10 @@ void IoTSender::initialize(int stage)
     batteryTimeVector.setName("Battery Time Consumption");
     batteryTime_ = par("batteryTime");
     battery_ = par("batteryAmp");
+    reChargeAmp_ = par("reChargeAmp");
+    reChargeTime_ = par("reChargeTime");
 
-    //timeHistogram.setName("Time per State Histogram");
-    //timeHistogram.setRangeAutoUpper(0, 10, 1.5);
+    totalTime_ = 0;
 
     factSil_ = par("factSil");
     factSen_ = par("factSen");
@@ -134,11 +135,7 @@ void IoTSender::initTraffic()
 void IoTSender::talkspurt(simtime_t dur)
 {
     iDtalk_++;
-    nframes_ = (ceil(dur / sampling_time));
-
-    // a talkspurt must be at least 1 frame long
-    if (nframes_ == 0)
-        nframes_ = 1;
+    nframes_ = nPkts_;
 
     EV << "IoTSender::talkspurt - TALKSPURT[" << iDtalk_-1 << "] - Will be created[" << nframes_ << "] frames\n";
 
@@ -184,11 +181,11 @@ void IoTSender::senMode(){
 }
 
 void IoTSender::talkMode(){
-    //transimission state
+    //transmission state
 
     //cancelEvent(selfSource_); //I had to canecl the prev timer.
 
-    simtime_t durTalk_ = 0.02*nPkts_;
+    simtime_t durTalk_ = nPkts_*size_*spb_*8;
     EV << "IoTSender::chooseState - Talks Purt: " << "Duration[" << durTalk_ << " seconds]\n";
     talkspurt(durTalk_);
     batteryCalculator(2, durTalk_);
@@ -228,35 +225,39 @@ void IoTSender::sendIoTPacket()
     }
 
     if (nframesTmp_ > 0)
-        scheduleAt(simTime() + sampling_time, selfSender_);
+        scheduleAt(simTime() + (iDframe_*size_*spb_*8), selfSender_);
+
+    //cancelEvent(selfSource_);
 }
 
 void IoTSender::batteryCalculator(int state, simtime_t dur)
 {
+    totalTime_ += dur;
     simtime_t prev = batteryTime_;
     simtime_t tmp = 0;
 
     switch(state){
-    case(0): tmp= dur * factSil_ * factHeat_; break;
+    case(0): tmp = dur * factSil_ * factHeat_; break;
     case(1): tmp = dur * factSen_ * factHeat_; break;
     case(2): tmp = dur * factTalk_ * factHeat_; break;
     }
 
     batteryTime_ = batteryTime_ - tmp;
 
-    if(batteryTime_ <= 0){
-        getSimulation()->getActiveEnvir()->alert("Battery is fully discharged");
-        stopSim();
+    if(battery_ <= 0){
+       //getSimulation()->getActiveEnvir()->alert("Battery is fully discharged");
+        EV << "Battery is fully discharged";
+        endSimulation();
     }
 
     EV << "Delta is: " <<prev -  batteryTime_<< " Sec\n";
 
-    battery_ = (SIMTIME_DBL(batteryTime_)*240)/172800;
+    battery_ = (SIMTIME_DBL(batteryTime_)*4000)/63480;
     batteryVector.record(battery_);
     batteryTimeVector.record(tmp);
 
     EV << "Battery ETA left is: " <<batteryTime_ << " Sec\n";
-    EV << "Battery value is now: " <<battery_ << " amp\n";
+    EV << "Battery value is now: " <<battery_ << " mAmp\n";
 
 }
 
@@ -266,7 +267,7 @@ void IoTSender::stopSim(){
 
 void IoTSender::finish()
 {
-    recordScalar("Total Sil Time", totalSil_);
-    recordScalar("Total Sen Time", totalSen_);
-    recordScalar("Total Talk Time", totalTalk_);
+    recordScalar("% of Sil Time", (totalSil_/SIMTIME_DBL(totalTime_)) * 100);
+    recordScalar("% of Sen Time", (totalSen_/SIMTIME_DBL(totalTime_)) * 100);
+    recordScalar("% of Talk Time", (totalTalk_/SIMTIME_DBL(totalTime_)) * 100);
 }

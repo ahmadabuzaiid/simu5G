@@ -40,12 +40,16 @@ class IoTSender : public omnetpp::cSimpleModule
     omnetpp::simtime_t totalSil_;
     omnetpp::simtime_t totalSen_;
     omnetpp::simtime_t totalTalk_;
-    omnetpp::simtime_t sampling_time;
+    double spb_;
 
     omnetpp::simtime_t batteryTime_;
     cOutVector batteryVector;
     cOutVector batteryTimeVector;
     double battery_;
+    double reChargeAmp_;
+    omnetpp::simtime_t reChargeTime_;
+
+    omnetpp::simtime_t totalTime_;
 
     double factSil_;
     double factSen_;
