@@ -42,8 +42,7 @@ void IoTSender::initialize(int stage)
         return;
 
     durSil_ = par("durSil");
-    scaleSen_ = par("scale_sen");
-    shapeSen_ = par("shape_sen");
+    mean_sen_ = par("mean_sen");
     state_ = 0;
     selfSource_ = new cMessage("selfSource");
     iDtalk_ = 0;
@@ -79,6 +78,8 @@ void IoTSender::initialize(int stage)
     totalSentBytes_ = 0;
     warmUpPer_ = getSimulation()->getWarmupPeriod();
     IoTGeneratedThroughtput_ = registerSignal("IoTGeneratedThroughtput");
+
+    batteryVector.record(battery_);
 
     initTraffic_ = new cMessage("initTraffic");
     initTraffic();
@@ -155,9 +156,6 @@ void IoTSender::chooseState()
 
 void IoTSender::silMode(){
     //silence state
-    //interarrival time
-
-    //cancelEvent(selfSource_); //I had to canecl the prev timer.
 
     EV << "IoTSender::chooseState - Silence Period: " << "Duration[" << durSil_ << "] seconds\n";
     batteryCalculator(0, durSil_);
@@ -169,9 +167,7 @@ void IoTSender::silMode(){
 void IoTSender::senMode(){
     //sensing state
 
-    //cancelEvent(selfSource_); //I had to canecl the prev timer.
-
-    simtime_t durSen_ = weibull(scaleSen_, shapeSen_);
+    simtime_t durSen_ = exponential(mean_sen_);
     double durSen2_ = round(SIMTIME_DBL(durSen_)*1000) / 1000;
     EV << "IoTSender::chooseState - Sensing Period: " << "Duration[" << durSen_ << "/" << durSen2_ << " seconds]\n";
     batteryCalculator(1, durSen_);
@@ -182,8 +178,6 @@ void IoTSender::senMode(){
 
 void IoTSender::talkMode(){
     //transmission state
-
-    //cancelEvent(selfSource_); //I had to canecl the prev timer.
 
     simtime_t durTalk_ = nPkts_*size_*spb_*8;
     EV << "IoTSender::chooseState - Talks Purt: " << "Duration[" << durTalk_ << " seconds]\n";
@@ -226,8 +220,6 @@ void IoTSender::sendIoTPacket()
 
     if (nframesTmp_ > 0)
         scheduleAt(simTime() + (iDframe_*size_*spb_*8), selfSender_);
-
-    //cancelEvent(selfSource_);
 }
 
 void IoTSender::batteryCalculator(int state, simtime_t dur)
@@ -245,7 +237,6 @@ void IoTSender::batteryCalculator(int state, simtime_t dur)
     batteryTime_ = batteryTime_ - tmp;
 
     if(battery_ <= 0){
-       //getSimulation()->getActiveEnvir()->alert("Battery is fully discharged");
         EV << "Battery is fully discharged";
         endSimulation();
     }
@@ -259,10 +250,6 @@ void IoTSender::batteryCalculator(int state, simtime_t dur)
     EV << "Battery ETA left is: " <<batteryTime_ << " Sec\n";
     EV << "Battery value is now: " <<battery_ << " mAmp\n";
 
-}
-
-void IoTSender::stopSim(){
-    while(true){}
 }
 
 void IoTSender::finish()

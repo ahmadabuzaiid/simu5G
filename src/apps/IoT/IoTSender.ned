@@ -20,8 +20,7 @@ simple IoTSender like IApp
         int PacketSize = default(60);
         int nPkts = default(4);
 		double durSil @unit("s") = default(5s);
-		double shape_sen = default(1.089);
-        double scale_sen = default(0.899);
+        double mean_sen = default(0.9);
         double startTime @unit("s") = default(0s);
         double spb = default(0.00001);
         int tos = default(-1); // if not -1, set the Type Of Service (IPv4) / Traffic Class (IPv6) field of sent packets to this value

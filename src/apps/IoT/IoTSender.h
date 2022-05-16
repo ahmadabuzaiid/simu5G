@@ -27,8 +27,7 @@ class IoTSender : public omnetpp::cSimpleModule
     //source
     omnetpp::simtime_t durSil_;
     omnetpp::cMessage* selfSource_;
-    double scaleSen_;
-    double shapeSen_;
+    double mean_sen_;
     int state_;
     //sender
     int iDtalk_;
