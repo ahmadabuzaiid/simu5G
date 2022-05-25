@@ -61,6 +61,8 @@ void IoTSender::initialize(int stage)
     batteryTimeVector.setName("Battery Time Consumption");
     batteryTime_ = par("batteryTime");
     battery_ = par("batteryAmp");
+    batteryTimeFull_ = par("batteryTime");
+    batteryFull_ = par("batteryAmp");
     reChargeAmp_ = par("reChargeAmp");
     reChargeTime_ = par("reChargeTime");
 
@@ -243,7 +245,7 @@ void IoTSender::batteryCalculator(int state, simtime_t dur)
 
     EV << "Delta is: " <<prev -  batteryTime_<< " Sec\n";
 
-    battery_ = (SIMTIME_DBL(batteryTime_)*4000)/63480;
+    battery_ = (SIMTIME_DBL(batteryTime_)*batteryFull_)/batteryTimeFull_;
     batteryVector.record(battery_);
     batteryTimeVector.record(tmp);
 

@@ -22,7 +22,7 @@ simple IoTSender like IApp
 		double durSil @unit("s") = default(5s);
         double mean_sen = default(0.9);
         double startTime @unit("s") = default(0s);
-        double spb = default(0.00001);
+        double spb = default(1/200000);
         int tos = default(-1); // if not -1, set the Type Of Service (IPv4) / Traffic Class (IPv6) field of sent packets to this value
         double factSil = default(1058/4260);
         double factSen = default(1058/3000);
